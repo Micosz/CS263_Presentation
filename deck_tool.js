@@ -2,7 +2,7 @@
 // Slide numbers are 1-based, as shown on the chapter cards.
 //
 //   node deck_tool.js list
-//   node deck_tool.js add-scene <slide> <image> [--at N] [--motion zoom|walk|none] [--alt text] [--notes text]
+//   node deck_tool.js add-scene <slide> <image or .html> [--at N] [--motion zoom|walk|none] [--alt text] [--notes text]
 //   node deck_tool.js remove-scene <slide> <scene>
 //   node deck_tool.js notes <slide> [scene] <text>
 //   node deck_tool.js move <slide> --after <slide>
@@ -67,12 +67,11 @@ if (cmd === 'list') {
   });
 } else if (cmd === 'add-scene') {
   const [no, img] = o._;
-  const s = slideAt(d, no), mime = MIME[path.extname(img).toLowerCase()];
-  if (!mime) throw new Error('image must be webp, png or jpg');
-  const scene = {
-    image: `data:${mime};base64,` + fs.readFileSync(img).toString('base64'),
-    alt: o.alt || '', motion: o.motion || 'zoom', notes: o.notes || '',
-  };
+  const s = slideAt(d, no), ext = path.extname(img).toLowerCase(), mime = MIME[ext];
+  if (!mime && ext !== '.html') throw new Error('file must be webp, png, jpg or html');
+  const scene = ext === '.html'
+    ? { html: fs.readFileSync(img, 'utf8'), alt: o.alt || '', motion: 'none', notes: o.notes || '' }
+    : { image: `data:${mime};base64,` + fs.readFileSync(img).toString('base64'), alt: o.alt || '', motion: o.motion || 'zoom', notes: o.notes || '' };
   s.scenes = s.scenes || [];
   const at = o.at ? Number(o.at) - 1 : s.scenes.length;
   s.scenes.splice(at, 0, scene);
